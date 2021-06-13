@@ -10,12 +10,14 @@ import 'bootstrap'
 
 import App from './App'
 import './bus'
+import currencyFilter from './filters/currency'
 
 
 Vue.config.productionTip = false
 Vue.use(VueAxios, axios);
 axios.defaults.withCredentials= true;
 Vue.component('Loading',Loading); //全域載
+Vue.filter('currency' , currencyFilter);
 /* eslint-disable no-new */
 new Vue({
   el: '#app',

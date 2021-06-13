@@ -19,8 +19,8 @@
         <tr v-for="item in products" :key="item.id">
           <td>{{ item.category }}</td>
           <td>{{ item.title }}</td>
-          <td class="text-right">{{ item.origin_price }}</td>
-          <td class="text-right">{{ item.price }}</td>
+          <td class="text-right">{{ item.origin_price | currency}}</td>
+          <td class="text-right">{{ item.price | currency}}</td>
           <td>
             <span v-if="item.is_enabled" class="text-secondary">啟用</span>
             <span v-else>未啟用</span>
@@ -32,7 +32,11 @@
         </tr>
       </tbody>
     </table>
-    <!-- Modal -->
+
+    <Pagination :pagination="pagination" @btn="getProductsData" />
+    
+
+    <!-- Modal 新增 -->
     <div
       class="modal fade"
       id="productModal"
@@ -246,7 +250,11 @@
 
 <script>
 import $ from "jquery";
+import Pagination from './Pagination'
 export default {
+  components:{
+    Pagination
+  },
   data() {
     return {
       products: [],
@@ -255,6 +263,12 @@ export default {
       isLoading: false,
       status:{
         fileUploading: false,
+      },
+      pagination:{//從後端回傳(後端已寫好，所以前端省下判斷麻煩(一頁10筆))
+        // current_page:1, //目前所在頁面
+        // has_next: false,
+        // has_pre: false,
+        // total_pages: 1, //總頁數
       }
     };
   },
@@ -263,14 +277,16 @@ export default {
     // this.$bus.$emit('message:push','這裡是一段訊息','success');//測試是否成功
   },
   methods: {
-    getProductsData() {
-      const api = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/products`;
+    getProductsData(page = 1) {
+      const api = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/products?page=${page}`;
       const vm = this;
+      // console.log('由子元件傳入',page)
       vm.isLoading = true;
       this.$http.get(api).then((response) => {
         console.log(response.data);
         vm.products = response.data.products;
         vm.isLoading = false;
+        vm.pagination = response.data.pagination
       });
     },
     openModal(isNew,item) {
@@ -334,10 +350,10 @@ export default {
     },
     uploadFile(){
       // console.log(this.products)
-      const formData = new FormData();
-      const uploadedFile = this.$refs.files.files[0]; //
-      // console.log(uploadedFile)
       let vm = this;
+      const formData = new FormData();
+      let uploadedFile = this.$refs.files.files[0]; //
+      // console.log(uploadedFile)
       vm.status.fileUploading = true;
       formData.append('file-to-upload',uploadedFile);
       const url = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/admin/upload`
@@ -351,13 +367,28 @@ export default {
           // vm.templateData.image = response.data.imageUrl; //可能沒有雙向綁定方法。註
           vm.status.fileUploading = false;
           vm.$set(vm.templateData,'imageUrl',response.data.imageUrl)
+          uploadedFile = '';
           console.log(vm.templateData)
         }else{
           this.$bus.$emit('message:push',response.data.message,'danger');
         }
       })
-      
-    }
+    },
+    // Pagination(caseName,page){
+    //   let vm = this;
+    //   let gotoPage = vm.pagination.current_page
+    //   if(caseName == 'next'){
+    //     gotoPage = gotoPage-1
+    //   }
+    //   else if(caseName == 'pre'){
+    //     gotoPage = gotoPage+1
+    //   }
+    //   else if(caseName == 'goto'){
+    //     gotoPage = page
+    //   }
+    //   let url = `${process.env.APIPATH}/api/${process.env.CUSTOMPATH}/products?page=${gotoPage}`
+
+    // }
   },
 };
 </script>
